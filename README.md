@@ -15,6 +15,7 @@ The script contains the following
 
 ```bash
 pyenv install 3.6.6
+pyenv rehash
 pyenv virtualenv 3.6.6 summarisers
 pyenv local summarisers
 
