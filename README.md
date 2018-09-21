@@ -32,6 +32,8 @@ You should download the datasets from https://www.kaggle.com/snapcrack/all-the-n
 
 The scripts expect the files to be unzipped to the `datasets` folder in the root of the project.
 
+There is a very basic data exploration script `dataexplore.py` that gives some basic insight into the data structure.
+
 ## Example 1 - Sequence to Sequence
 
 LSTM with Attention

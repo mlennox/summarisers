@@ -2,6 +2,10 @@
 datasets/*.csv
 datasets/*.zip
 
+# exclude project stuff
+.vscode/*
+.DS_Store
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
