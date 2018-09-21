@@ -1,3 +1,7 @@
+# Exclude the dataset files
+datasets/*.csv
+datasets/*.zip
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
