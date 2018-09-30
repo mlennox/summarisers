@@ -10,12 +10,24 @@ except Exception:
     print(
         "Some problem loading the articles_combined.csv - you need to unzip your csv and run combine.py first!"
     )
+    exit()
 
 
 print("describe ----")
 print(df.describe())
+
 print("columns ----")
 print(df.columns)
+
 print("top and bottom 10 rows ----")
-print(df[["date", "title", "content", "publication"]].head(10))
+# print(df[["date", "title", "content", "publication"]].head(10))
+print(df[:10][["title"]])
 print(df[["date", "title", "content", "publication"]].tail(10))
+
+print("headline and content from row 1 ----")
+print("= = = = = = = = = = = = = = = = = =")
+print(df.loc[df.index[0], "title"])
+print("- - - - - - - - - - - - - - - - - -")
+print(df.loc[df.index[0], "content"])
+print("= = = = = = = = = = = = = = = = = =")
+

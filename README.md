@@ -38,6 +38,10 @@ There is a very basic data exploration script `dataexplore.py` that gives some b
 
 LSTM with Attention
 
+I'll explain how to build a seq2seq model using LSTM
+
+[You can read an overview in the example folder](./ex1/readme.md) and I have blogged / will blog about elements of this in more detail at [webpusher.ie](http://www.webpusher.ie)
+
 ### Building vocabulary vectors with word2vec
 
 #### Compare output with sense2vec
@@ -45,6 +49,20 @@ LSTM with Attention
 ## Example 2 - BiLSTM with Attention
 
 ## Example 3 - Seq2Seq with pointer and coverage
+
+## other datasets
+
+http://research.signalmedia.co/newsir16/signal-dataset.html
+
+And also Newsroom https://summari.es/
+
+## Longer summaries of larger source material
+
+Requires a training set of summaries that are not a headline. There is a wikipedia dataset that may be useful
+
+https://github.com/tscheepers/Wikipedia-Summary-Dataset
+
+part of this https://github.com/tscheepers/CompVec
 
 ## Junk drawer
 
