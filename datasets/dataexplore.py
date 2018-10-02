@@ -31,3 +31,9 @@ print("- - - - - - - - - - - - - - - - - -")
 print(df.loc[df.index[0], "content"])
 print("= = = = = = = = = = = = = = = = = =")
 
+print("generate msgpack from dataframe")
+df.to_msgpack("./tester.pack")
+
+print("loading the dataframe back from the file")
+df_new = pd.read_msgpack("./tester.pack")
+print(df_new.describe())

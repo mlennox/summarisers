@@ -1,6 +1,7 @@
 # Exclude the dataset files
 datasets/*.csv
 datasets/*.zip
+datasets/*.pack
 
 # exclude project stuff
 .vscode/*
