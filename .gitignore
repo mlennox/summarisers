@@ -2,6 +2,7 @@
 datasets/*.csv
 datasets/*.zip
 *.pack
+*.pkl
 
 # exclude project stuff
 .vscode/*
