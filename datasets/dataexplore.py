@@ -31,6 +31,9 @@ print("- - - - - - - - - - - - - - - - - -")
 print(df.loc[df.index[0], "content"])
 print("= = = = = = = = = = = = = = = = = =")
 
+print("rows with bad index should be culled ---")
+print(df[df[:0].apply(lambda x: type(x) == str)])
+
 print("generate msgpack from dataframe")
 df.to_msgpack("./tester.pack")
 
