@@ -7,20 +7,57 @@ df = pd.read_msgpack("./combined_articles.pack")
 # df = pd.read_csv("./combined_articles.csv")
 print(df.describe())
 
-print("- - - - - - TITLE")
-wrong = df[df["title"].apply(lambda x: type(x) != str)]
-print(wrong.describe())
-print(wrong.head(10))
+dated = df[df["date"].apply(lambda x: type(x) != str)]
+print("-- - - - - -", dated.describe())
 
-print("- - - - - - CONTENT")
-wrong = df[df["content"].apply(lambda x: type(x) != str)]
-print(wrong.describe())
-print(wrong.head(10))
+#  remove the bad rows
+df = df[df["title"].apply(lambda x: type(x) == str)]
+df = df[df["date"].apply(lambda x: type(x) != str)]
+print(df.describe())
 
-print("- - - - - - ID")
-wrong = df[df["id"].apply(lambda x: type(x) == str)]
-print(wrong.describe())
-print(wrong.head(10))
+# substitute smart quotes for straight
+df["title"] = df["title"].apply(
+    lambda x: x.replace("“", '"')
+    .replace("”", '"')
+    .replace("‟", '"')
+    .replace("‶", '"')
+    .replace("″", '"')
+    .replace("’", "'")
+    .replace("‵", "'")
+    .replace("‘", "'")
+    .replace("’", "'")
+    .replace("′", "'")
+    .replace("‛", "'")
+)
+
+df["content"] = df["content"].apply(
+    lambda x: x.replace("“", '"')
+    .replace("”", '"')
+    .replace("‟", '"')
+    .replace("‶", '"')
+    .replace("″", '"')
+    .replace("’", "'")
+    .replace("‵", "'")
+    .replace("‘", "'")
+    .replace("’", "'")
+    .replace("′", "'")
+    .replace("‛", "'")
+)
+
+# print("- - - - - - TITLE")
+# wrong = df[df["title"].apply(lambda x: type(x) != str)]
+# print(wrong.describe())
+# print(wrong.head(10))
+
+# print("- - - - - - CONTENT")
+# wrong = df[df["content"].apply(lambda x: type(x) != str)]
+# print(wrong.describe())
+# print(wrong.head(10))
+
+# print("- - - - - - ID")
+# wrong = df[df["id"].apply(lambda x: type(x) == str)]
+# print(wrong.describe())
+# print(wrong.head(10))
 
 # df[df['A'].apply(lambda x: type(x)==str)]
 
