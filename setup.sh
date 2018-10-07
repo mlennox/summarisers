@@ -6,3 +6,5 @@ pyenv local summarisers
 pip install -U pip
 
 pip install -r requirements.txt
+
+python -m spacy download en
