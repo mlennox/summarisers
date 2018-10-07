@@ -3,6 +3,8 @@ datasets/*.csv
 datasets/*.zip
 *.pack
 *.pkl
+glove.*/
+glove*.txt
 
 # exclude project stuff
 .vscode/*

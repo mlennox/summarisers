@@ -19,9 +19,11 @@ pyenv rehash
 pyenv virtualenv 3.6.6 summarisers
 pyenv local summarisers
 
-pip intall -U pip
+pip install -U pip
 
 pip install -r requirements.txt
+
+python -m spacy download en
 ```
 
 Once you run that you should be ready to go.
@@ -33,6 +35,21 @@ You should download the datasets from https://www.kaggle.com/snapcrack/all-the-n
 The scripts expect the files to be unzipped to the `datasets` folder in the root of the project.
 
 There is a very basic data exploration script `dataexplore.py` that gives some basic insight into the data structure.
+
+I've had to clean up some of the data
+
+## Word embeddings
+
+You will need to have downloaded the word embeddings. [On the GloVe official page](https://nlp.stanford.edu/projects/glove/) you should download the [GloVe pre-trained word embeddings](http://nlp.stanford.edu/data/glove.6B.zip). They are 822 Megs so it may take a while.
+
+Unzip them to the datasets folder. You will see four files which contain the model weights for embeddings using four different vector dimensions.
+
+```bash
+glove.6B.50d.txt
+glove.6B.100d.txt
+glove.6B.200d.txt
+glove.6B.300d.txt
+```
 
 ## Example 1 - Sequence to Sequence
 
