@@ -3,8 +3,9 @@ from itertools import chain
 from pandas import read_msgpack
 from numpy import array, empty, random
 from traceback import print_exc
-from msgpack import pack, unpack, packb, unpackb
+from msgpack import packb, unpackb
 from os import path
+from scipy import spatial
 import msgpack_numpy as m
 
 m.patch()  # patch msgpack to use msgpack_numpy encoding/decoding
@@ -68,7 +69,7 @@ def load_from_msgpack(filename):
     try:
         with open("../datasets/glove.6B/%s.pack" % filename, "rb") as infile:
             packed = infile.read()
-        return unpackb(packed)
+        return unpackb(packed)  # streaming msgpack does not work with msgpack-numpy
     except Exception:
         print("Could not load '%s'" % filename)
         print_exc()
@@ -78,7 +79,7 @@ def load_from_msgpack(filename):
 def save_to_msgpack(data, filename):
     print("Saving data '%s' in msgpack format" % filename)
     try:
-        packed = packb(data)
+        packed = packb(data)  # streaming msgpack does not work with msgpack-numpy
         with open("../datasets/glove.6B/%s.pack" % filename, "wb") as outfile:
             outfile.write(packed)
     except Exception:
@@ -87,14 +88,17 @@ def save_to_msgpack(data, filename):
         exit()
 
 
-# copy any matching word embeddings from GloVe to our vocabulary matrix
 def create_vocab_matrix(
     vocab_size, vocab, embedding_dimension, model_weights, model_index, glove_threshold
 ):
+    """
+    copy any matching word embeddings from GloVe to our vocabulary matrix
+    """
     print("Creating the vocabulary matrix")
     # matrix_shape = (vocab_size, embedding_dimension)
     # scale = 1  # what to do here...?
     vocabulary_matrix = {}
+    words_outside = {}
     # random.uniform(low= -scale, high=scale, size=matrix_shape)
     model_index_keys = model_index.keys()
 
@@ -104,12 +108,31 @@ def create_vocab_matrix(
         if word in model_index_keys:
             word_index = model_index[word]
             vocabulary_matrix[word_index] = model_weights[word_index]
+        else:
+            words_outside[index] = word
     print("Entries in vocabulary matrix", len(vocabulary_matrix))
+    print("Words outside the vocabulary matrix", len(words_outside))
+
 
     # now get nearest match embeddings for words that are not in the GloVe embeddings
+    # convert the dict to a matrix
+    # get embedding for the word from GloVe
+    # compare to the embeddings in matrix
+    # select best - or exclude if not close match
+    for index in words_outside.keys:
+        
+
+
+def cos_cdist(matrix, vector):
+    """
+    Compute the cosine distances between each row of matrix and vector.
+    """
+    v = vector.reshape(1, -1)
+    return spatial.distance.cdist(matrix, v, "cosine").reshape(-1)
 
 
 def run():
+    # set to True to always reload GloVe weigths from raw file
     force_load_glove = False
     vocab_size = 40000
     embedding_dimension = 100
