@@ -5,6 +5,7 @@ from numpy import array, empty, random
 from traceback import print_exc
 from msgpack import packb, unpackb
 from os import path
+import re
 from scipy import spatial
 import msgpack_numpy as m
 
@@ -22,14 +23,26 @@ def load_data(dataset_name):
         exit()
 
 
-remove_quotes = lambda x: x.replace('"', "")
+whittle_to_words = lambda x: re.sub(r"[^\w\s'\b]", " ", x)
 
 
 def build_vocabulary(word_list):
     print("building vocabulary")
-    vocabcount = Counter(word for txt in word_list for word in txt.split())
-    vocab = map(lambda x: x[0], sorted(vocabcount.items(), key=lambda x: -x[1]))
-    return list(vocab), vocabcount
+    vocab_exists = path.isfile("../datasets/glove.6B/vocab.pack")
+    if vocab_exists:
+        print("We can load the pre-prepared vocab list")
+        vocab = load_from_msgpack("vocab")
+        vocabcount = load_from_msgpack("vocabcount")
+    else:
+        print("We need to generate the vocab list")
+        word_list = word_list.apply(whittle_to_words)
+        vocabcount = Counter(word for txt in word_list for word in txt.split())
+        vocab = list(
+            map(lambda x: x[0], sorted(vocabcount.items(), key=lambda x: -x[1]))
+        )
+        save_to_msgpack(vocab, "vocab")
+        save_to_msgpack(vocabcount, "vocabcount")
+    return vocab, vocabcount
 
 
 def load_embeddings(embedding_dimension, force_load_glove):
@@ -69,7 +82,9 @@ def load_from_msgpack(filename):
     try:
         with open("../datasets/glove.6B/%s.pack" % filename, "rb") as infile:
             packed = infile.read()
-        return unpackb(packed)  # streaming msgpack does not work with msgpack-numpy
+        return unpackb(
+            packed, encoding="utf8"
+        )  # streaming msgpack does not work with msgpack-numpy
     except Exception:
         print("Could not load '%s'" % filename)
         print_exc()
@@ -95,40 +110,40 @@ def create_vocab_matrix(
     copy any matching word embeddings from GloVe to our vocabulary matrix
     """
     print("Creating the vocabulary matrix")
-    # matrix_shape = (vocab_size, embedding_dimension)
-    # scale = 1  # what to do here...?
-    vocabulary_matrix = {}
+    vocabulary_dict = {}
     words_outside = {}
-    # random.uniform(low= -scale, high=scale, size=matrix_shape)
-    model_index_keys = model_index.keys()
+    vocabulary_matrix = empty(101)
+    model_index_keys = list(model_index.keys())
+    print("model index keys - - - -- ", model_index_keys[1:50])
+    print("vocabulary - - - -- ", vocab[1:50])
 
     for index in range(vocab_size):
         # check if the current word exists in the model
         word = vocab[index]
         if word in model_index_keys:
             word_index = model_index[word]
-            vocabulary_matrix[word_index] = model_weights[word_index]
+            vocabulary_dict[word_index] = model_weights[word_index]
+            # vocabulary_matrix.append(array(word_index, model_weights[word_index]))
         else:
             words_outside[index] = word
-    print("Entries in vocabulary matrix", len(vocabulary_matrix))
+    print("Entries in vocabulary matrix", len(vocabulary_dict))
     print("Words outside the vocabulary matrix", len(words_outside))
 
 
-    # now get nearest match embeddings for words that are not in the GloVe embeddings
-    # convert the dict to a matrix
-    # get embedding for the word from GloVe
-    # compare to the embeddings in matrix
-    # select best - or exclude if not close match
-    for index in words_outside.keys:
-        
+#     # now get nearest match embeddings for words that are not in the GloVe embeddings
+#     # convert the dict to a matrix
+#     # get embedding for the word from GloVe
+#     # compare to the embeddings in matrix
+#     # select best - or exclude if not close match
+#     for index in words_outside.keys:
 
 
-def cos_cdist(matrix, vector):
-    """
-    Compute the cosine distances between each row of matrix and vector.
-    """
-    v = vector.reshape(1, -1)
-    return spatial.distance.cdist(matrix, v, "cosine").reshape(-1)
+# def cos_cdist(matrix, vector):
+#     """
+#     Compute the cosine distances between each row of matrix and vector.
+#     """
+#     v = vector.reshape(1, -1)
+#     return spatial.distance.cdist(matrix, v, "cosine").reshape(-1)
 
 
 def run():
@@ -139,9 +154,11 @@ def run():
     glove_threshold = 0.5
     model_weights, model_index = load_embeddings(embedding_dimension, force_load_glove)
     df = load_data("combined_articles")
-    vocab, vocabulary_count = build_vocabulary(
-        df["title"].apply(remove_quotes) + df["content"].apply(remove_quotes)
-    )
+    # print(df.iloc[1]["title"].apply(whittle_to_words))
+    # print(df["content"].apply(whittle_to_words).iloc[1])
+    # print(df.iloc[1]["title"] + " " + df.iloc[1]["content"])
+
+    vocab, vocabulary_count = build_vocabulary(df["title"] + " " + df["content"])
     create_vocab_matrix(
         vocab_size,
         vocab,

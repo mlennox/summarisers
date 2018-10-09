@@ -1,25 +1,17 @@
 import pandas as pd
 import numpy as np
-
+from re import sub
 import glob, os, time
 
 
 def read_and_describe_csv(filename):
     # dates are in the form 2017-01-05
+    # ``
+    # ''
     to_datetime = lambda d: time.strptime(d.replace("/", "-"), "%Y-%m-%d")
-    replace_smartquotes = (
-        lambda x: x.replace("“", '"')
-        .replace("”", '"')
-        .replace("‟", '"')
-        .replace("‶", '"')
-        .replace("″", '"')
-        .replace("’", "'")
-        .replace("‵", "'")
-        .replace("‘", "'")
-        .replace("’", "'")
-        .replace("′", "'")
-        .replace("‛", "'")
-    )
+    replace_smart_single = lambda x: sub(r"[’‘‛‵′]", "'", x)
+    replace_smart_double = lambda x: sub(r"[“”‟‶″]|['`]{2,}", '"', x)
+    # x.sub(r"[“”‟‶″]", '"').sub(r"[’‘‛‵′]", "'")
     print("- - - - - - - - - - - - - - - -")
     print('loading file "%s"' % filename)
     df = pd.read_csv(
@@ -58,8 +50,12 @@ def read_and_describe_csv(filename):
     df = df[df["date"].apply(lambda x: type(x) == str)]
 
     print("Replacing smartquotes with straight quotes")
-    df["title"] = df.title.apply(replace_smartquotes)
-    df["content"] = df.content.apply(replace_smartquotes)
+    df["title"] = df["title"].apply(replace_smart_single).apply(replace_smart_double)
+    df["content"] = (
+        df["content"].apply(replace_smart_single).apply(replace_smart_double)
+    )
+
+    print("= = = = = ", type(df.iloc[1]["title"]))
 
     # print("Converting date to datetime")
     # df.date = df.date.apply(to_datetime)
