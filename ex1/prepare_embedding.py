@@ -1,15 +1,18 @@
 from collections import Counter
 from itertools import chain
 from pandas import read_msgpack
-from numpy import array, empty, random
+from numpy import array, empty, random, ndarray, reshape
 from traceback import print_exc
-from msgpack import packb, unpackb
+import pickle
+
+# from msgpack import packb, unpackb, ExtType
 from os import path
 import re
 from scipy import spatial
-import msgpack_numpy as m
 
-m.patch()  # patch msgpack to use msgpack_numpy encoding/decoding
+# import msgpack_numpy as m
+
+# m.patch()  # patch msgpack to use msgpack_numpy encoding/decoding
 
 
 def load_data(dataset_name):
@@ -28,11 +31,11 @@ whittle_to_words = lambda x: re.sub(r"[^\w\s'\b]", " ", x)
 
 def build_vocabulary(word_list):
     print("building vocabulary")
-    vocab_exists = path.isfile("../datasets/glove.6B/vocab.pack")
+    vocab_exists = path.isfile("../datasets/glove.6B/vocab.pkl")
     if vocab_exists:
         print("We can load the pre-prepared vocab list")
-        vocab = load_from_msgpack("vocab")
-        vocabcount = load_from_msgpack("vocabcount")
+        vocab = load_pickle("vocab")
+        vocabcount = load_pickle("vocabcount")
     else:
         print("We need to generate the vocab list")
         word_list = word_list.apply(whittle_to_words)
@@ -40,8 +43,8 @@ def build_vocabulary(word_list):
         vocab = list(
             map(lambda x: x[0], sorted(vocabcount.items(), key=lambda x: -x[1]))
         )
-        save_to_msgpack(vocab, "vocab")
-        save_to_msgpack(vocabcount, "vocabcount")
+        save_pickle(vocab, "vocab")
+        save_pickle(vocabcount, "vocabcount")
     return vocab, vocabcount
 
 
@@ -50,11 +53,11 @@ def load_embeddings(embedding_dimension, force_load_glove):
     try:
         model_weights = {}
         model_index = {}
-        model_exists = path.isfile("../datasets/glove.6B/model_weights.pack")
+        model_exists = path.isfile("../datasets/glove.6B/model_weights.pkl")
         if model_exists and force_load_glove != True:
             print("Loading existing msgpacked models")
-            model_weights = load_from_msgpack("model_weights")
-            model_index = load_from_msgpack("model_index")
+            model_weights = load_pickle("model_weights")
+            model_index = load_pickle("model_index")
         else:
             print("Loading raw GloVe embeddings and creating msgpack")
             with open(
@@ -64,12 +67,12 @@ def load_embeddings(embedding_dimension, force_load_glove):
                 for line in glove_file:
                     splitLine = line.split()
                     word = splitLine[0]
-                    embedding = array([float(val) for val in splitLine[1:]])
+                    embedding = [float(val) for val in splitLine[1:]]
                     model_weights[index] = embedding
                     model_index[word] = index
                     index += 1
-                save_to_msgpack(model_weights, "model_weights")
-                save_to_msgpack(model_index, "model_index")
+                save_pickle(model_weights, "model_weights")
+                save_pickle(model_index, "model_index")
         return model_weights, model_index
     except Exception:
         print("some issue loading the file or processing the weights")
@@ -77,30 +80,76 @@ def load_embeddings(embedding_dimension, force_load_glove):
         exit()
 
 
-def load_from_msgpack(filename):
-    print("Loading data '%s' from msgpack format" % filename)
+def load_pickle(filename):
+    print("Loading data '%s' from pickle" % filename)
     try:
-        with open("../datasets/glove.6B/%s.pack" % filename, "rb") as infile:
-            packed = infile.read()
-        return unpackb(
-            packed, encoding="utf8"
-        )  # streaming msgpack does not work with msgpack-numpy
+        with open("../datasets/glove.6B/%s.pkl" % filename, "rb") as infile:
+            packed = pickle.load(infile)
+        return packed
     except Exception:
         print("Could not load '%s'" % filename)
         print_exc()
         exit()
 
 
-def save_to_msgpack(data, filename):
-    print("Saving data '%s' in msgpack format" % filename)
+def save_pickle(data, filename):
+    print("Loading data '%s' from pickle" % filename)
     try:
-        packed = packb(data)  # streaming msgpack does not work with msgpack-numpy
-        with open("../datasets/glove.6B/%s.pack" % filename, "wb") as outfile:
-            outfile.write(packed)
+        with open("../datasets/glove.6B/%s.pkl" % filename, "wb") as outfile:
+            pickle.dump(data, outfile)
     except Exception:
         print("Could not save '%s'" % filename)
         print_exc()
         exit()
+
+
+# def default(obj):
+#     # print("= = = =")
+#     # print("obj : ", obj)
+#     # print("obj type: ", type(obj))
+#     if isinstance(obj, ndarray):  # and obj.typecode == "d":
+#         return ExtType(42, obj.tostring())
+#     raise TypeError("Unknown type: %r" % (obj,))
+
+
+# def ext_hook(code, data):
+#     print("= = = = = =")
+#     print("code : ", code)
+#     print("data : ", data)
+#     if code == 42:
+#         a = array("d")
+#         a.fromstring(data)
+#         return a
+#     return ExtType(code, data)
+
+
+# def load_from_msgpack(filename):
+#     print("Loading data '%s' from msgpack format" % filename)
+#     try:
+#         with open("../datasets/glove.6B/%s.pack" % filename, "rb") as infile:
+#             packed = infile.read()
+#         # return unpackb(
+#         #     packed,
+#         # )  # streaming msgpack does not work with msgpack-numpy
+#         return unpackb(packed, ext_hook=ext_hook, raw=False)
+#     except Exception:
+#         print("Could not load '%s'" % filename)
+#         print_exc()
+#         exit()
+
+
+# def save_to_msgpack(data, filename):
+#     print("Saving data '%s' in msgpack format" % filename)
+#     try:
+#         packed = packb(
+#             data, default=default, use_bin_type=True
+#         )  # streaming msgpack does not work with msgpack-numpy
+#         with open("../datasets/glove.6B/%s.pack" % filename, "wb") as outfile:
+#             outfile.write(packed)
+#     except Exception:
+#         print("Could not save '%s'" % filename)
+#         print_exc()
+#         exit()
 
 
 def create_vocab_matrix(
@@ -112,7 +161,9 @@ def create_vocab_matrix(
     print("Creating the vocabulary matrix")
     vocabulary_dict = {}
     words_outside = {}
-    vocabulary_matrix = empty(101)
+    # we will add the word index and weights to a list which is 101 elements at a time
+    # then we will reshape that into a 101x{vocab size} array/matrix
+    vocabulary_matrix_list = []
     model_index_keys = list(model_index.keys())
     print("model index keys - - - -- ", model_index_keys[1:50])
     print("vocabulary - - - -- ", vocab[1:50])
@@ -123,11 +174,15 @@ def create_vocab_matrix(
         if word in model_index_keys:
             word_index = model_index[word]
             vocabulary_dict[word_index] = model_weights[word_index]
-            # vocabulary_matrix.append(array(word_index, model_weights[word_index]))
+            # is this as performant as possible?
+            vocabulary_matrix_list.extend([word_index] + model_weights[word_index])
         else:
             words_outside[index] = word
     print("Entries in vocabulary matrix", len(vocabulary_dict))
     print("Words outside the vocabulary matrix", len(words_outside))
+    print("vocab matrix list - first row", vocabulary_matrix_list[0:202])
+    vocabulary_matrix = reshape(vocabulary_matrix_list, (-1, 101))
+    print("vocab matrix - first two rows", vocabulary_matrix[0:2])
 
 
 #     # now get nearest match embeddings for words that are not in the GloVe embeddings
@@ -154,9 +209,6 @@ def run():
     glove_threshold = 0.5
     model_weights, model_index = load_embeddings(embedding_dimension, force_load_glove)
     df = load_data("combined_articles")
-    # print(df.iloc[1]["title"].apply(whittle_to_words))
-    # print(df["content"].apply(whittle_to_words).iloc[1])
-    # print(df.iloc[1]["title"] + " " + df.iloc[1]["content"])
 
     vocab, vocabulary_count = build_vocabulary(df["title"] + " " + df["content"])
     create_vocab_matrix(
