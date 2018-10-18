@@ -1,6 +1,7 @@
 # Exclude the dataset files
 datasets/*.csv
 datasets/*.zip
+datasets/*.jsonl
 *.pack
 *.pkl
 glove.*/
