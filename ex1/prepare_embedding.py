@@ -5,7 +5,8 @@ from numpy import array, empty, random, ndarray, reshape, argmin
 from traceback import print_exc
 import pickle
 
-# from msgpack import packb, unpackb, ExtType
+import common.DataLoader
+
 from os import path
 import re
 from scipy import spatial
@@ -18,7 +19,7 @@ from scipy import spatial
 def load_data(dataset_name):
     print("Loading news dataset from msgpack")
     try:
-        return read_msgpack("../datasets/%s.pack" % dataset_name)
+        return read_msgpack("./datasets/%s.pack" % dataset_name)
     except Exception:
         print(
             "Some problem loading the articles_combined.pack - you need to unzip your csv and run combine.py first!"
@@ -31,7 +32,7 @@ whittle_to_words = lambda x: re.sub(r"[^\w\s'\b]", " ", x).lower()
 
 def build_vocabulary(word_list):
     print("building vocabulary")
-    vocab_exists = path.isfile("../datasets/glove.6B/vocab.pkl")
+    vocab_exists = path.isfile("./datasets/glove.6B/vocab.pkl")
     if vocab_exists:
         print("We can load the pre-prepared vocab list")
         vocab = load_pickle("vocab")
@@ -209,8 +210,9 @@ def build_vocab_matrix(
     vocab_size, vocab, embedding_dimension, model_weights, model_index, glove_threshold
 ):
     """
-
-    
+    Find the GloVe embedding for each word in the vocabulary
+    Create a matrix from that list
+    then take words outside the vocabulary and try and fit them to the
     Arguments:
         vocab_size {int} -- sets the size limit of the vocabulary 
         vocab {list<str>} -- list of vocabulary words (<= vocab_size)

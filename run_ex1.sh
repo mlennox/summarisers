@@ -1,0 +1,1 @@
+python -m ex1.prepare_embedding
