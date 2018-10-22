@@ -1,12 +1,13 @@
 import pandas as pd
 import numpy as np
 from json import loads
+import SerialiserPickle
 
 
 class GloveLoader:
     glovepath = "../datasets/glove.6B/"
 
-    def load(self):
+    def load(self, filename):
         """
         Load the Glove embeddings
         
@@ -18,7 +19,7 @@ class GloveLoader:
         try:
             print("loading the JSONL")
             json_list = []
-            with open(self.filename, "r") as json_file:
+            with open(glovepath + filename, "r") as json_file:
                 for line in json_file:
                     json_list.append(loads(line))
             print("Converting to dataframe")
@@ -36,10 +37,10 @@ class GloveLoader:
 
     def serialise(self, model_weights, model_index):
         """
-      Serialise the loaded Glove model to speed up loading next time
-      """
-      save_pickle(model_weights, "model_weights")
-      save_pickle(model_index, "model_index")
+        Serialise the loaded Glove model to speed up loading next time
+        """
+        SerialiserPickle.save(model_weights, "model_weights")
+        SerialiserPickle.save(model_index, "model_index")
 
 
 def load_embeddings(embedding_dimension, force_load_glove):
