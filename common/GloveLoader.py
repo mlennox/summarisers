@@ -6,7 +6,10 @@ from os import path
 from traceback import print_exc
 
 
-class GloveLoader:
+class GloveLoader(object):
+    def __init__(self):
+        self.serialiser = SerialiserPickle.SerialiserPickle()
+
     glovepath = "../datasets/glove.6B/"
 
     def load(self, embedding_dimension, force_load_glove):
@@ -52,11 +55,11 @@ class GloveLoader:
         """
         Serialise the loaded Glove model to speed up loading next time
         """
-        SerialiserPickle.save(model_weights, embedding_dimension, "model_weights")
-        SerialiserPickle.save(model_index, embedding_dimension, "model_index")
+        self.serialiser.save(model_weights, embedding_dimension, "model_weights")
+        self.serialiser.save(model_index, embedding_dimension, "model_index")
 
-    def deserialise(self. embedding_dimension):
-        model_weights = SerialiserPickle.load(embedding_dimension, "model_weights")
-        model_index = SerialiserPickle.load(embedding_dimension, "model_index")
+    def deserialise(self, embedding_dimension):
+        model_weights = self.serialiser.load(embedding_dimension, "model_weights")
+        model_index = self.serialiser.load(embedding_dimension, "model_index")
         return (model_weights, model_index)
 
