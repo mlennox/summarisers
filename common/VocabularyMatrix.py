@@ -1,8 +1,61 @@
-# from numpy import array, empty, random, ndarray, reshape, argmin
-from numpy import reshape
-
+from numpy import reshape, array, argmin
+from scipy import spatial
 
 class VocabularyMatrix(object):
+      def create(
+          self,
+          vocabulary_size,
+          vocabulary_list,
+          embedding_dimension,
+          model_weights,
+          model_index,
+          glove_threshold
+      ):
+        """[summary]
+        
+        Arguments:
+          vocabulary_size {int} -- the chosen vocab size
+          vocabulary_list {list} -- the list of all the words in the source dataset
+          embedding_dimension {int} -- the dimension of the embedding vectors
+          model_weights {dictionary<list>} -- entire embedding vectors
+          model_index {dictionary} -- words of embedding as key and index as value
+          glove_threshold {float} -- how close am 'outside' word needs to be to be deemed a match 
+        
+        Returns:
+          [array] -- our vocabulary matrix we'll use for encoding
+        """
+        
+        vocabulary_matrix_list, unmatched_words = self.inside_words(vocabulary_size, vocabulary_list, model_weights, model_index)
+
+        return vocabulary_matrix
+
+
+      def inside_words(self, vocabulary_size, vocabulary_list, model_weights, model_index):
+        unmatched_words = {}
+        vocabulary_matrix_list = []
+        model_index_keys = list(model_index.keys())
+
+        for index in range(vocabulary_size):
+          # check if the current word exists in the model
+          word = vocabulary_list[index]
+          if word in model_index_keys:
+              word_index = model_index[word]
+              # we extend the list by the vocabulary index and the associated embedding weights
+              # the vocabulary index is not the same as the embedding index
+              vocabulary_matrix_list.extend([index, model_weights[word_index]])
+          else:
+            unmatched_words[index] = word
+        return vocabulary_matrix_list, unmatched_words
+
+
+      # def outside_words(self):
+
+
+
+
+# 
+# 
+
     def match_outside_words(
         self,
         glove_threshold,
