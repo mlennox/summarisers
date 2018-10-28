@@ -14,7 +14,7 @@ class Vocabulary(object):
     whittle_to_words = lambda x: re.sub(r"[^\w\s'\b]", " ", x).lower()
 
     def make_word_list(self, df):
-        return (df["title"] + " " + df["content"]).apply(self.whittle_to_words)
+        return df["title"] + " " + df["content"]  # .apply(self.whittle_to_words)
 
     def process_word_list(self, word_list):
         vocabcount = Counter(word for txt in word_list for word in txt.split())
@@ -53,7 +53,7 @@ class Vocabulary(object):
         Returns:
           [*] -- returns the desrialised model - can be any type...
         """
-        filename = "{0}{1}".format(self.filename_template, model_name)
+        filename = "{0}{1}.pkl".format(self.filename_template, model_name)
         print("Desrialising model from '{0}'".format(filename))
         return self.serialiser.load(filename)
 
@@ -64,6 +64,6 @@ class Vocabulary(object):
           model {object} -- the model data
           model_name {str} -- used to form the filename, usually choose the model variable name
         """
-        filename = "{0}{1}".format(self.filename_template, model_name)
+        filename = "{0}{1}.pkl".format(self.filename_template, model_name)
         self.serialiser.save(model, filename)
 

@@ -7,7 +7,7 @@ class ArticleLoader:
 
     def load(self):
         """
-        Load the JSONL (json object per line) file into a dataframe
+        Load the JSONL (json object per line) file into a dataframe        
         
         Returns:
             [DataFrame] -- a pandas dataframe of the JSON data
