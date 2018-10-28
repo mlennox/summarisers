@@ -5,7 +5,7 @@ class PrepareEmbeddings:
     def __init__(self):
         self.gloveloader = GloveLoader.GloveLoader()
 
-    force_load_glove = False
+    use_cache = True
     vocab_size = 40000
     embedding_dimension = 100
     glove_threshold = 0.5
@@ -14,7 +14,7 @@ class PrepareEmbeddings:
         # set to True to always reload GloVe weights from raw file
 
         model_weights, model_index = self.gloveloader.load(
-            self.embedding_dimension, self.force_load_glove
+            self.embedding_dimension, self.use_cache
         )
         # df = load_data("combined_articles")
 
@@ -29,3 +29,7 @@ class PrepareEmbeddings:
         #     type(model_weights),
         #     type(model_weights[model_index["the"]]),
         # )
+
+
+prepare = PrepareEmbeddings()
+prepare.run()

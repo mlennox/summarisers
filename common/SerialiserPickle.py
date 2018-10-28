@@ -3,34 +3,28 @@ from traceback import print_exc
 
 
 class SerialiserPickle:
-    def load(self, embedding_dimension, filename):
+    filename_template = "./datasets/glove.6B/{0}.{1}.pkl"
+
+    def load(self, embedding_dimension, filename_slug):
+        filename = self.filename_template.format(filename_slug, embedding_dimension)
         print("Loading data '{0}' from pickle".format(filename))
         try:
-            with open(
-                "../datasets/glove.6B/{0}.{1}.pkl".format(
-                    filename, embedding_dimension
-                ),
-                "rb",
-            ) as infile:
+            with open(filename, "rb") as infile:
                 packed = pickle.load(infile)
             return packed
         except Exception:
-            print("Could not load '{0}.{1}'".format(filename, embedding_dimension))
+            print("Could not load '{0}'".format(filename))
             print_exc()
             exit()
 
-    def save(self, data, embedding_dimension, jhkjhkjh):
-        print("Saving data '{0}' to pickle".format(jhkjhkjh))
+    def save(self, data, embedding_dimension, filename_slug):
+        filename = self.filename_template.format(filename_slug, embedding_dimension)
+        print("Saving data '{0}' to pickle".format(filename))
         try:
-            with open(
-                "../datasets/glove.6B/{0}.{1}.pkl".format(
-                    jhkjhkjh, embedding_dimension
-                ),
-                "wb",
-            ) as outfile:
+            with open(filename, "wb") as outfile:
                 pickle.dump(data, outfile)
         except Exception:
-            print("Could not save '{0}.{1}'".format(jhkjhkjh, embedding_dimension))
+            print("Could not save '{0}'".format(filename))
             print_exc()
             exit()
 
