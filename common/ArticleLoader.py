@@ -2,8 +2,8 @@ import pandas as pd
 from json import loads
 
 
-class DataLoader:
-    filename = "../datasets/signalmedia-1m.jsonl"
+class ArticleLoader:
+    filename = "./datasets/signalmedia-1m.jsonl"
 
     def load(self):
         """
@@ -27,8 +27,8 @@ class DataLoader:
             print(e)
             exit()
 
-        print("Columns : ", df.columns)
-        print("Working on describing the data")
-        print(df.describe())
+        # print("Columns : ", df.columns)
+        # print("Working on describing the data")
+        # print(df.describe())
 
         return df

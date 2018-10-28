@@ -69,8 +69,16 @@ class GloveLoader(object):
             model_weights {dictionary<list>} -- a dictionary of the weight lists (with length embedding_dimension) where the key is the word index
             model_index {dictionary} -- a dictionary of the word as key and index as value
         """
-        self.serialiser.save(model_weights, embedding_dimension, "model_weights")
-        self.serialiser.save(model_index, embedding_dimension, "model_index")
+        self.serialiser.save(
+            model_weights,
+            "{0}{1}.{2}.pkl".format(
+                self.glovepath, "model_weights", embedding_dimension
+            ),
+        )
+        self.serialiser.save(
+            model_index,
+            "{0}{1}.{2}.pkl".format(self.glovepath, "model_index", embedding_dimension),
+        )
 
     def deserialise(self, embedding_dimension):
         """deserialise the model
@@ -81,7 +89,13 @@ class GloveLoader(object):
         Returns:
             [tuple(dictionary<list>, dictionary)] -- a tuple containing a dictionary with the word index as key and a list (matching embedding_dimension in length) of the word weights
         """
-        model_weights = self.serialiser.load(embedding_dimension, "model_weights")
-        model_index = self.serialiser.load(embedding_dimension, "model_index")
+        model_weights = self.serialiser.load(
+            "{0}{1}.{2}.pkl".format(
+                self.glovepath, "model_weights", embedding_dimension
+            )
+        )
+        model_index = self.serialiser.load(
+            "{0}{1}.{2}.pkl".format(self.glovepath, "model_index", embedding_dimension)
+        )
         return (model_weights, model_index)
 
