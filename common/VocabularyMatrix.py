@@ -1,16 +1,17 @@
-from numpy import reshape, array, argmin
+from numpy import reshape, array, argmin, nditer
 from scipy import spatial
 
+
 class VocabularyMatrix(object):
-      def create(
-          self,
-          vocabulary_size,
-          vocabulary_list,
-          embedding_dimension,
-          model_weights,
-          model_index,
-          glove_threshold
-      ):
+    def create(
+        self,
+        vocabulary_size,
+        vocabulary_list,
+        embedding_dimension,
+        model_weights,
+        model_index,
+        glove_threshold,
+    ):
         """[summary]
         
         Arguments:
@@ -24,139 +25,83 @@ class VocabularyMatrix(object):
         Returns:
           [array] -- our vocabulary matrix we'll use for encoding
         """
-        
-        vocabulary_matrix_list, unmatched_words = self.inside_words(vocabulary_size, vocabulary_list, model_weights, model_index)
+
+        vocabulary_matrix_list, unmatched_words = self.inside_words(
+            vocabulary_size, vocabulary_list, model_weights, model_index
+        )
 
         return vocabulary_matrix
 
+    def weight_words(
+        self,
+        vocabulary_list,
+        vocabulary_index_start,
+        vocabulary_index_end,
+        model_weights,
+        model_index,
+        embedding_dimension,
+    ):
 
-      def inside_words(self, vocabulary_size, vocabulary_list, model_weights, model_index):
         unmatched_words = {}
         vocabulary_matrix_list = []
         model_index_keys = list(model_index.keys())
+        embedding_dimension = 0
 
-        for index in range(vocabulary_size):
-          # check if the current word exists in the model
-          word = vocabulary_list[index]
-          if word in model_index_keys:
-              word_index = model_index[word]
-              # we extend the list by the vocabulary index and the associated embedding weights
-              # the vocabulary index is not the same as the embedding index
-              vocabulary_matrix_list.extend([index, model_weights[word_index]])
-          else:
-            unmatched_words[index] = word
-        return vocabulary_matrix_list, unmatched_words
-
-
-      # def outside_words(self):
-
-
-
-
-# 
-# 
-
-    def match_outside_words(
-        self,
-        glove_threshold,
-        vocab,
-        vocabulary_matrix,
-        vocabulary_dict,
-        words_outside,
-        model_index,
-        model_weights,
-    ):
-        """
-      Iterate through the outside words
-      find the embedding vector from the GloVe model
-      compare the resulting vector with all vectors of vocabulary matrix
-      assign the outside word to a vocabulary matrix if they are similar enough
-      """
-        reject_words = []
-        vocabulary_dict_keys = list(vocabulary_dict.keys())
-        for outside_word_index, outside_word in words_outside.items():
-            if outside_word in model_index:
-                outside_word_glove_index = model_index[outside_word]
-                outside_word_glove_vector = array(
-                    model_weights[outside_word_glove_index]
-                ).reshape(1, -1)
-
-                distance_matrix = spatial.distance.cdist(
-                    vocabulary_matrix, outside_word_glove_vector, "cosine"
-                ).reshape(-1)
-                min_index = argmin(distance_matrix)
-
-                if distance_matrix[min_index] <= glove_threshold:
-                    print(
-                        "word: {0} -- glove index: {1} -- vocab index: {2} -- distance score: {3}".format(
-                            outside_word,
-                            model_index[outside_word],
-                            vocabulary_dict_keys[min_index],
-                            distance_matrix[min_index],
-                        )
-                    )
-                    print(
-                        "The outside word '{0}' is close enough to '{1}'".format(
-                            outside_word, vocab[vocabulary_dict_keys[min_index]]
-                        )
-                    )
-
-            else:
-                print('The word "%s" was not in the GloVe list' % outside_word)
-                reject_words.append(outside_word)
-
-        print("Reject count %s" % len(reject_words))
-        print("Outside count %s" % len(words_outside))
-
-    def create_vocab_matrix(
-        self,
-        vocab_size,
-        vocab,
-        embedding_dimension,
-        model_weights,
-        model_index,
-        glove_threshold,
-    ):
-        """
-      copy any matching word embeddings from GloVe to our vocabulary matrix
-      """
-        print("Creating the vocabulary matrix")
-        vocabulary_dict = {}
-        words_outside = {}
-        # we will add the word index and weights to a list which is 101 elements at a time
-        # then we will reshape that into a 101x{vocab size} array/matrix
-        vocabulary_matrix_list = []
-        model_index_keys = list(model_index.keys())
-        # print("model index keys - - - -- ", model_index_keys[1:50])
-        # print("vocabulary - - - -- ", vocab[1:50])
-
-        for index in range(vocab_size):
+        for index in range(vocabulary_index_start, vocabulary_index_end):
             # check if the current word exists in the model
-            word = vocab[index]
+            word = vocabulary_list[index]
             if word in model_index_keys:
                 word_index = model_index[word]
-                # vocabulary_dict[word_index] = model_weights[word_index]
-                # is this as performant as possible?
-                vocabulary_matrix_list.extend(model_weights[word_index])
+                embedding = model_weights[word_index]
+                if embedding == 0:
+                    embedding_dimension = len(embedding)
+                # we extend the list by the vocabulary index and the associated embedding weights
+                # the vocabulary index is not the same as the embedding index
+                vocabulary_matrix_list.extend([index, embedding])
             else:
-                # now we split by single quote as many outside words contain or are pre/suffixed by them
-                for split_word in word.split("'"):
-                    if split_word not in vocab and len(split_word) > 0:
-                        print("NOT IN VOCAB", split_word)
-                        words_outside[len(words_outside)] = split_word
-
-        print("Entries in vocabulary matrix", len(vocabulary_dict))
-        print("Words outside the vocabulary matrix", len(words_outside))
-        # print("vocab matrix list - first row", vocabulary_matrix_list[0:202])
+                unmatched_words[index] = word
         vocabulary_matrix = reshape(vocabulary_matrix_list, (-1, embedding_dimension))
-        # print("vocab matrix - first two rows", vocabulary_matrix[0:2])
+        return vocabulary_matrix, unmatched_words
 
-        self.match_outside_words(
-            glove_threshold,
-            vocab,
-            vocabulary_dict,
-            vocabulary_matrix,
-            words_outside,
-            model_index,
-            model_weights,
+    def inside_words(
+        self, vocabulary_size, vocabulary_list, model_weights, model_index
+    ):
+        vocabulary_matrix_list, unmatched_words = weight_words(
+            vocabulary_list, 0, vocabulary_size, model_weights, model_index
         )
+        return vocabulary_matrix, unmatched_words
+
+    def outside_words(
+        self, vocabulary_size, vocabulary_list, model_weights, model_index
+    ):
+        vocabulary_matrix_list, unmatched_words = weight_words(
+            vocabulary_list,
+            vocabulary_size,
+            len(vocabulary_list),
+            model_weights,
+            model_index,
+        )
+        return vocabulary_matrix, unmatched_words
+
+    def map_outside_words(
+        self, vocabulary_matrix, vocabulary_outside_matrix, distance_threshold
+    ):
+        nearly_inside_matrix_list = []
+        # note: need to figure out how to vectorise this
+        for word_and_weight in nditer(
+            vocabulary_outside_matrix, flags=["external_loop"], order="F"
+        ):
+            # need to trim first element from word and weight as we only want the glove embedding
+            distance_matrix = spatial.distance.cdist(
+                vocabulary_matrix, word_and_weight, "cosine"
+            ).reshape(-1)
+            min_index = argmin(distance_matrix)
+            if distance_matrix[min_index] <= distance_threshold:
+                nearly_inside_matrix_list.append(vocabulary_matrix[min_index])
+        print(
+            "There were {0} outside words that were a close enough match to be mapped to words in the vocabulary matrix".format(
+                len(nearly_inside_matrix_list)
+            )
+        )
+        return nearly_inside_matrix_list
+
