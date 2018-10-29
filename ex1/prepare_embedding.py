@@ -19,6 +19,7 @@ class PrepareEmbeddings:
         model_weights, model_index = self.gloveloader.load(
             self.embedding_dimension, self.use_cache
         )
+
         article_df = self.articleloader.load()
 
         vocabulary, vocabulary_count = self.vocabulary.build_vocabulary(

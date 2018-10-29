@@ -1,8 +1,12 @@
 from numpy import reshape, array, argmin, nditer, concatenate
 from scipy import spatial
+from common import SerialiserPickle
 
 
 class VocabularyMatrix(object):
+    def __init(self):
+        self.serialiser = SerialiserPickle.SerialiserPickle()
+
     def create(
         self,
         vocabulary_size,
@@ -12,8 +16,12 @@ class VocabularyMatrix(object):
         model_index,
         outside_threshold,
     ):
-        """[summary]
-        
+        """
+        Find the embedding weights for top words in vocabulary up to the 'vocabulary_size' 
+        create a matrix with vocabulary word index and weight as embedding_dimension + 1 vector
+        take the words outside the top words and find embedding weights
+        map outside words to existing vocabulary if their cosine distance is less than 'outside_threshold'
+
         Arguments:
           vocabulary_size {int} -- the chosen vocab size
           vocabulary_list {list} -- the list of all the words in the source dataset
@@ -26,7 +34,7 @@ class VocabularyMatrix(object):
           [array] -- our vocabulary matrix we'll use for encoding
         """
 
-        vocabulary_matrix, vocabulary_outside_matrix, unmatched_words = self.inside_words(
+        vocabulary_matrix, vocabulary_outside_matrix, unmatched_words = self.build_matrix(
             vocabulary_size, vocabulary_list, model_weights, model_index
         )
 
@@ -34,23 +42,26 @@ class VocabularyMatrix(object):
             vocabulary_matrix, vocabulary_outside_matrix, outside_threshold
         )
 
-        #  add the nearly inside words to the vocab matrix
+        final_vocab_matrix = concatenate(vocabulary_matrix, nearly_inside_words, axis=0)
 
-        return concatenate(vocabulary_matrix, nearly_inside_words, axis=0)
+        self.serialise(final_vocab_matrix)
 
-    def inside_words(
+        return final_vocab_matrix
+
+    def build_matrix(
         self, vocabulary_size, vocabulary_list, model_weights, model_index
     ):
-        """[summary]
+        """
+        find the embedding weights for the 'inside' and 'outside' words
         
         Arguments:
-          vocabulary_size {[type]} -- [description]
-          vocabulary_list {[type]} -- [description]
-          model_weights {[type]} -- [description]
-          model_index {[type]} -- [description]
+          vocabulary_size {int} -- [description]
+          vocabulary_list {list} -- [description]
+          model_weights {dictionary<list>} -- [description]
+          model_index {dictionary} -- [description]
         
         Returns:
-          [type] -- [description]
+          tuple(ndarray, ndarray, dictionary) -- the inside and outside vocabulary matrices and the unmatched words
         """
 
         vocabulary_matrix, unmatched_words = self.weight_words(
@@ -145,3 +156,5 @@ class VocabularyMatrix(object):
         )
         return nearly_inside_matrix_list
 
+    def serialise(self, vocabulary_matrix):
+        self.serialiser.save(vocabulary_matrix, "./datasets/vocabulary_matrix.pkl")
