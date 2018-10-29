@@ -1,4 +1,4 @@
-from common import ArticleLoader, GloveLoader, Vocabulary
+from common import ArticleLoader, GloveLoader, Vocabulary, VocabularyMatrix
 
 
 class PrepareEmbeddings:
@@ -6,6 +6,7 @@ class PrepareEmbeddings:
         self.gloveloader = GloveLoader.GloveLoader()
         self.articleloader = ArticleLoader.ArticleLoader()
         self.vocabulary = Vocabulary.Vocabulary()
+        self.vocabularyMatrix = VocabularyMatrix.VocabularyMatrix()
 
     use_cache = True
     vocab_size = 40000

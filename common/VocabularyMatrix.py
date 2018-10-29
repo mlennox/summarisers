@@ -1,4 +1,4 @@
-from numpy import reshape, array, argmin, nditer
+from numpy import reshape, array, argmin, nditer, concatenate
 from scipy import spatial
 
 
@@ -34,7 +34,9 @@ class VocabularyMatrix(object):
             vocabulary_matrix, vocabulary_outside_matrix, outside_threshold
         )
 
-        return vocabulary_matrix
+        #  add the nearly inside words to the vocab matrix
+
+        return concatenate(vocabulary_matrix, nearly_inside_words, axis=0)
 
     def inside_words(
         self, vocabulary_size, vocabulary_list, model_weights, model_index
