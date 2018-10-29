@@ -10,7 +10,7 @@ class VocabularyMatrix(object):
         embedding_dimension,
         model_weights,
         model_index,
-        glove_threshold,
+        outside_threshold,
     ):
         """[summary]
         
@@ -20,17 +20,53 @@ class VocabularyMatrix(object):
           embedding_dimension {int} -- the dimension of the embedding vectors
           model_weights {dictionary<list>} -- entire embedding vectors
           model_index {dictionary} -- words of embedding as key and index as value
-          glove_threshold {float} -- how close am 'outside' word needs to be to be deemed a match 
+          outside_threshold {float} -- how close (in cos distance) an 'outside' word needs to be to be deemed a match 
         
         Returns:
           [array] -- our vocabulary matrix we'll use for encoding
         """
 
-        vocabulary_matrix_list, unmatched_words = self.inside_words(
+        vocabulary_matrix, vocabulary_outside_matrix, unmatched_words = self.inside_words(
             vocabulary_size, vocabulary_list, model_weights, model_index
         )
 
+        nearly_inside_words = self.map_outside_words(
+            vocabulary_matrix, vocabulary_outside_matrix, outside_threshold
+        )
+
         return vocabulary_matrix
+
+    def inside_words(
+        self, vocabulary_size, vocabulary_list, model_weights, model_index
+    ):
+        """[summary]
+        
+        Arguments:
+          vocabulary_size {[type]} -- [description]
+          vocabulary_list {[type]} -- [description]
+          model_weights {[type]} -- [description]
+          model_index {[type]} -- [description]
+        
+        Returns:
+          [type] -- [description]
+        """
+
+        vocabulary_matrix, unmatched_words = self.weight_words(
+            vocabulary_list, 0, vocabulary_size, model_weights, model_index
+        )
+        vocabulary_outside_matrix, unmatched_outside_words = self.weight_words(
+            vocabulary_list,
+            vocabulary_size,
+            len(vocabulary_list),
+            model_weights,
+            model_index,
+        )
+
+        return (
+            vocabulary_matrix,
+            vocabulary_outside_matrix,
+            {**unmatched_words, **unmatched_outside_words},
+        )
 
     def weight_words(
         self,
@@ -39,8 +75,19 @@ class VocabularyMatrix(object):
         vocabulary_index_end,
         model_weights,
         model_index,
-        embedding_dimension,
     ):
+        """[summary]
+        
+        Arguments:
+          vocabulary_list {[type]} -- [description]
+          vocabulary_index_start {[type]} -- [description]
+          vocabulary_index_end {[type]} -- [description]
+          model_weights {[type]} -- [description]
+          model_index {[type]} -- [description]
+        
+        Returns:
+          [type] -- [description]
+        """
 
         unmatched_words = {}
         vocabulary_matrix_list = []
@@ -63,29 +110,20 @@ class VocabularyMatrix(object):
         vocabulary_matrix = reshape(vocabulary_matrix_list, (-1, embedding_dimension))
         return vocabulary_matrix, unmatched_words
 
-    def inside_words(
-        self, vocabulary_size, vocabulary_list, model_weights, model_index
-    ):
-        vocabulary_matrix_list, unmatched_words = weight_words(
-            vocabulary_list, 0, vocabulary_size, model_weights, model_index
-        )
-        return vocabulary_matrix, unmatched_words
-
-    def outside_words(
-        self, vocabulary_size, vocabulary_list, model_weights, model_index
-    ):
-        vocabulary_matrix_list, unmatched_words = weight_words(
-            vocabulary_list,
-            vocabulary_size,
-            len(vocabulary_list),
-            model_weights,
-            model_index,
-        )
-        return vocabulary_matrix, unmatched_words
-
     def map_outside_words(
-        self, vocabulary_matrix, vocabulary_outside_matrix, distance_threshold
+        self, vocabulary_matrix, vocabulary_outside_matrix, outside_threshold
     ):
+        """[summary]
+        
+        Arguments:
+          vocabulary_matrix {[type]} -- [description]
+          vocabulary_outside_matrix {[type]} -- [description]
+          outside_threshold {[type]} -- [description]
+        
+        Returns:
+          [type] -- [description]
+        """
+
         nearly_inside_matrix_list = []
         # note: need to figure out how to vectorise this
         for word_and_weight in nditer(
@@ -96,7 +134,7 @@ class VocabularyMatrix(object):
                 vocabulary_matrix, word_and_weight, "cosine"
             ).reshape(-1)
             min_index = argmin(distance_matrix)
-            if distance_matrix[min_index] <= distance_threshold:
+            if distance_matrix[min_index] <= outside_threshold:
                 nearly_inside_matrix_list.append(vocabulary_matrix[min_index])
         print(
             "There were {0} outside words that were a close enough match to be mapped to words in the vocabulary matrix".format(
