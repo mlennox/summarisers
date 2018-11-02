@@ -11,10 +11,26 @@ class Vocabulary(object):
 
     filename_template = "./datasets/glove.6B/"
 
-    whittle_to_words = lambda x: re.sub(r"[^\w\s'\b]", " ", x).lower()
+    whittle_to_words = staticmethod(
+        lambda x: re.sub(r"[^\w\s'\-/]", " ", x)
+    )  # .lower())
+
+    straighten_single_quotes = staticmethod(lambda x: re.sub(r"[‛’‘’‵′]", "'", x))
+
+    # straighten_double_quotes = staticmethod(lambda x: re.sub(r"[“”‶″]", '"', x))
 
     def make_word_list(self, df):
-        return df["title"] + " " + df["content"]  # .apply(self.whittle_to_words)
+        df["title"] = (
+            df["title"]
+            # .apply(self.straighten_double_quotes)
+            .apply(self.straighten_single_quotes).apply(self.whittle_to_words)
+        )
+        df["content"] = (
+            df["content"]
+            # .apply(self.straighten_double_quotes)
+            .apply(self.straighten_single_quotes).apply(self.whittle_to_words)
+        )
+        return df["title"] + " " + df["content"]
 
     def process_word_list(self, word_list):
         vocabcount = Counter(word for txt in word_list for word in txt.split())

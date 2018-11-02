@@ -9,9 +9,9 @@ class PrepareEmbeddings:
         self.vocabularyMatrix = VocabularyMatrix.VocabularyMatrix()
 
     use_cache = True
-    vocab_size = 40000
+    vocabulary_size = 40000
     embedding_dimension = 100
-    glove_threshold = 0.5
+    outside_threshold = 0.5
 
     def run(self):
         # set to True to always reload GloVe weights from raw file
@@ -24,6 +24,15 @@ class PrepareEmbeddings:
 
         vocabulary, vocabulary_count = self.vocabulary.build_vocabulary(
             article_df, self.use_cache
+        )
+
+        self.vocabularyMatrix.create(
+            self.vocabulary_size,
+            vocabulary,
+            self.embedding_dimension,
+            model_weights,
+            model_index,
+            self.outside_threshold,
         )
 
 
