@@ -11,9 +11,9 @@ class Vocabulary(object):
 
     filename_template = "./datasets/glove.6B/"
 
-    whittle_to_words = staticmethod(
-        lambda x: re.sub(r"[^\w\s'\-/]", " ", x)
-    )  # .lower())
+    whittle_to_words = staticmethod(lambda x: re.sub(r"[^\w\s'\-/]", " ", x))
+
+    remove_multiple_whitespace = staticmethod(lambda x: re.sub(r"\s+", " ", x))
 
     straighten_single_quotes = staticmethod(lambda x: re.sub(r"[‛’‘’‵′]", "'", x))
 
@@ -22,18 +22,22 @@ class Vocabulary(object):
     def make_word_list(self, df):
         df["title"] = (
             df["title"]
-            # .apply(self.straighten_double_quotes)
-            .apply(self.straighten_single_quotes).apply(self.whittle_to_words)
+            .apply(self.straighten_single_quotes)
+            .apply(self.whittle_to_words)
+            .apply(self.remove_multiple_whitespace)
         )
         df["content"] = (
             df["content"]
-            # .apply(self.straighten_double_quotes)
-            .apply(self.straighten_single_quotes).apply(self.whittle_to_words)
+            .apply(self.straighten_single_quotes)
+            .apply(self.whittle_to_words)
+            .apply(self.remove_multiple_whitespace)
         )
         return df["title"] + " " + df["content"]
 
     def process_word_list(self, word_list):
-        vocabcount = Counter(word for txt in word_list for word in txt.split())
+        vocabcount = Counter(
+            word for txt in word_list for word in re.split(r"[\s'\\\/]", txt)
+        )
         vocab = list(
             map(lambda x: x[0], sorted(vocabcount.items(), key=lambda x: -x[1]))
         )
