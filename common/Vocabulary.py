@@ -36,7 +36,7 @@ class Vocabulary(object):
 
     def process_word_list(self, word_list):
         vocabcount = Counter(
-            word for txt in word_list for word in re.split(r"[\s'\\\/]", txt)
+            word for txt in word_list for word in re.split(r"[\s\\\/]", txt)
         )
         vocab = list(
             map(lambda x: x[0], sorted(vocabcount.items(), key=lambda x: -x[1]))
