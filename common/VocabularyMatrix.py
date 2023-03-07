@@ -1,6 +1,7 @@
-from numpy import reshape, array, argmin, nditer, concatenate
+from numpy import reshape, array, asarray, argmin, nditer, concatenate, zeros
 from scipy import spatial
 from common import SerialiserPickle
+from pandas import DataFrame
 
 
 class VocabularyMatrix(object):
@@ -43,12 +44,24 @@ class VocabularyMatrix(object):
             embedding_dimension,
         )
 
+        print(
+            "Inside and Outside words weighted - now to match outside words to closest inside words"
+        )
+
         nearly_inside_words = self.map_outside_words(
             vocabulary_matrix,
             vocabulary_outside_matrix,
             outside_threshold,
             embedding_dimension,
         )
+
+        print(
+            "Matched {0} outside words to closest inside words".format(
+                len(nearly_inside_words)
+            )
+        )
+
+        # TODO print some of the matched words and their matched inside words
 
         final_vocab_matrix = concatenate(vocabulary_matrix, nearly_inside_words, axis=0)
 
@@ -78,6 +91,7 @@ class VocabularyMatrix(object):
         """
         vocabulary_list_length = len(vocabulary_list)
         max_words_limit = vocabulary_size + 1000
+
         vocabulary_matrix, unmatched_words = self.weight_words(
             vocabulary_list,
             0,
@@ -118,11 +132,65 @@ class VocabularyMatrix(object):
             {**unmatched_words, **unmatched_outside_words},
         )
 
+    # def weighter_func(self, row):
+    #     print("= = = = =", row)
+    #     return (
+    #         model_weights[model_index[word]]
+    #         if word in model_index_keys
+    #         else unmatched_weight
+    #     )
+
+    # def vectorised_weight_words(
+    #     self,
+    #     vocabulary_list,
+    #     vocabulary_index_start,
+    #     word_limit,
+    #     model_weights,
+    #     model_index,
+    #     embedding_dimension,
+    # ):
+    #     print("vectorised weight words")
+    #     model_index_keys = list(model_index.keys())
+
+    #     unmatched_weight = zeros((1, embedding_dimension))
+    #     # a if condition else b
+    #     # get_weight = (
+    #     #     lambda word: model_weights[model_index[word]]
+    #     #     if word in model_index_keys
+    #     #     else unmatched_weight
+    #     # )
+    #     # print("convert list to dataframe")
+    #     # vocabulary_df = DataFrame(vocabulary_list)
+    #     # print("= = = = = = vocab DF shape", vocabulary_df.shape)
+
+    #     # weighter = (
+    #     #     lambda word: (model_weights[model_index[word]])
+    #     #     if (word in model_index_keys)
+    #     #     else unmatched_weight
+    #     # )
+
+    #     print("Apply the weight")
+    #     vocabulary_matrix_full = vocabulary_df.apply(self.weighter_func)
+    #     print(
+    #         "vocabulary_matrix first 10 = = = = = = = = = = = =",
+    #         vocabulary_matrix_full.shape,
+    #         vocabulary_matrix_full[0:10],
+    #     )
+    #     # vocabulary_matrix_list = [get_weight(word) for word in vocabulary_list]
+
+    #     # print(
+    #     #     "vocabulary_matrix first 10 = = = = = = = = = = = =",
+    #     #     vocabulary_matrix_list[0:10],
+    #     # )
+
+    # change vocabulary_index_end to word_limit
+    # word_limit can be -1 or None to just read all the rest of the words
+    # also need to return the last index
     def weight_words(
         self,
         vocabulary_list,
         vocabulary_index_start,
-        vocabulary_index_end,
+        word_limit,
         model_weights,
         model_index,
         embedding_dimension,
@@ -130,9 +198,10 @@ class VocabularyMatrix(object):
         """[summary]
         
         Arguments:
-          vocabulary_list {[type]} -- [description]
-          vocabulary_index_start {[type]} -- [description]
-          vocabulary_index_end {[type]} -- [description]
+          vocabulary_list {list<str>} -- the list of words
+          vocabulary_index_start {int} -- index where we start weighting words
+          # vocabulary_index_end {[type]} -- [description]
+          word_limit {int} - number of words we want weighted
           model_weights {[type]} -- [description]
           model_index {[type]} -- [description]
         
@@ -142,11 +211,13 @@ class VocabularyMatrix(object):
 
         unmatched_words = {}
         vocabulary_matrix_list = []
+        index = 0
         model_index_keys = list(model_index.keys())
 
-        for index in range(vocabulary_index_start, vocabulary_index_end):
+        # for index in range(vocabulary_index_start, vocabulary_index_end):
+        for word in iter(vocabulary_list):
             # check if the current word exists in the model
-            word = vocabulary_list[index]
+            # word = vocabulary_list[index]
             # if index % 100 == 0:
             #     print('Checking "{0}" (index {1})'.format(word, index))
             if word in model_index_keys:
